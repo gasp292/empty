@@ -46,6 +46,7 @@ DIAGRAM_CSS = """
 .dg .bnd-t{font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:11px;font-weight:600;letter-spacing:.06em;fill:var(--ink)}
 .dg .lg{font-size:11.5px;fill:var(--ink)}
 .dg .note{font-size:11px;fill:var(--muted);font-style:italic}
+.dg .zone{font-family:var(--font-mono,'IBM Plex Mono',monospace);font-size:15px;font-weight:600;letter-spacing:.12em;fill:var(--ink)}
 """ + "".join(
     f".dg .e.{c}{{stroke:var(--{c})}}.dg .mk.{c}{{fill:var(--{c})}}.dg .n.{c}{{stroke:var(--{c});stroke-width:2}}"
     for c in EDGE_CLASSES)
@@ -134,6 +135,8 @@ def svg(d, standalone=False):
             x += 50 + len(lab) * 6.6
     for (x, y), t in d.notes:
         p.append(f'<text class="note" x="{x}" y="{y}">{escape(t)}</text>')
+    for x, y, t in d.texts:
+        p.append(f'<text class="zone" x="{x}" y="{y}" text-anchor="middle">{escape(t)}</text>')
     p.append("</g></svg>")
     return "".join(p)
 
@@ -252,6 +255,9 @@ def drawio_page(d, pid):
     for j, ((nx_, ny_), t) in enumerate(d.notes):
         cells.append(f'<mxCell id="{pid}-note{j}" value="{x(t)}" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=2;fontColor={L["muted"]};" vertex="1" parent="1">'
                      f'<mxGeometry x="{nx_ + dx}" y="{ny_ - 10}" width="700" height="20" as="geometry"/></mxCell>')
+    for j, (tx, ty, t) in enumerate(d.texts):
+        cells.append(f'<mxCell id="{pid}-zone{j}" value="{x(t)}" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;" vertex="1" parent="1">'
+                     f'<mxGeometry x="{tx + dx - 150}" y="{ty - 12}" width="300" height="24" as="geometry"/></mxCell>')
     return (f'<diagram id="{pid}" name="{x(d.title)}"><mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" '
             f'guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="{d.w}" '
             f'pageHeight="{d.h}" math="0" shadow="0"><root>{"".join(cells)}</root></mxGraphModel></diagram>')

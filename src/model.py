@@ -5,6 +5,7 @@ class Diagram:
     def __init__(self, key, title, w, h, dx=0):
         self.key, self.title, self.w, self.h, self.dx = key, title, w, h, dx
         self.groups, self.nodes, self.edges, self.legend, self.notes = [], {}, [], [], []
+        self.texts = []  # titres de zones : (x, y, texte)
 
     def group(self, gid, label, x0, y0, x1, y1, cls="grp", lx=None):
         self.groups.append(dict(id=gid, label=label, x0=x0, y0=y0, x1=x1, y1=y1, cls=cls,
@@ -240,4 +241,48 @@ USE_CASES = [
 assert set(TRACE) == {s[0] for s in SUBFUNCS}, "fonction non tracée"
 assert {c for cs in TRACE.values() for c in cs} == set(COMP_GROUP), "composant non tracé"
 assert {f for *_, fs in OPS_TRACE for f in fs} <= set(TRACE)
-DIAGRAMS = [env, fbs, tech]
+# ================================================================ 1bis. ENVIRONNEMENT (EN, mise en page du slide 13)
+en = Diagram("env_en", "Environment diagram", 1700, 990)
+en.node("drone", "Delivery drone\n(system of interest)", 850, 490, 320, 140, "sys")
+EN_TOP = [("Regulator\n(EASA, DGAC)", "Laws, standards\n(EU 2019/947, U-space)", "in"),
+          ("Drone traffic management\n(UTM / U-space)", "Flight authorizations,\nrestricted areas", "both"),
+          ("Climate", "Wind, rain,\ntemperature, humidity", "in"),
+          ("Urban environment", "Obstacles (buildings,\ntrees, cables, birds)", "in"),
+          ("Other airspace users\n(helicopters, drones)", "Collision risk,\nRemote ID", "both"),
+          ("Third parties /\nlocal residents", "Noise, fall risk,\nprivacy", "out")]
+EN_BOT = [("Charging station", "Electricity", "in"),
+          ("GNSS constellation\n(GPS, Galileo)", "Positioning signal", "in"),
+          ("4G / 5G network", "Data (telemetry,\ncommands)", "both"),
+          ("Remote supervision\noperator (telepilot)", "Mission commands,\ntakeover", "both"),
+          ("Maintenance operator", "Maintenance operations,\ndiagnostics", "both"),
+          ("Drop zone /\nparcel locker", "Landing or\ndrop surface", "in")]
+for row, items, cls, ny, dy_node, dy_sys in (("t", EN_TOP, "c-con", 120, 148, 420), ("b", EN_BOT, "c-res", 840, 812, 560)):
+    for i, (lab, flow, d) in enumerate(items):
+        nid, x = f"{row}{i}", 350 + 200 * i
+        en.node(nid, lab, x, ny, 180, 56, cls)
+        a, b = (x, dy_node), (715 + 54 * i, dy_sys)
+        lp = lerp(a, b, 0.35)
+        if d == "out":
+            en.edge("drone", nid, [b, a], flow, cls, lp=lp)
+        else:
+            en.edge(nid, "drone", [a, b], flow, cls, both=(d == "both"), lp=lp)
+en.node("grid", "Energy grid", 350, 950, 180, 48, "sec")
+en.edge("grid", "b0", [(350, 926), (350, 868)], "Electricity", "sec", dash=True)
+en.node("wh", "Warehouse\n(warehouse operator)", 420, 430, 190, 56, "c-in")
+en.node("plat", "E-commerce\nordering platform", 420, 550, 190, 56, "c-in")
+en.node("cust", "Customer", 130, 550, 180, 48, "sec")
+en.edge("wh", "drone", [(515, 430), (690, 455)], "Package\n(loading, returns)", "c-in", both=True)
+en.edge("plat", "drone", [(515, 550), (690, 525)], "Delivery order /\ndelivery status", "c-in", both=True)
+en.edge("cust", "plat", [(220, 550), (325, 550)], "Online\norder", "sec", dash=True)
+en.node("rec", "Recipient", 1280, 430, 190, 56, "c-out")
+en.node("phone", "Recipient's\nsmartphone", 1280, 550, 190, 56, "c-out")
+en.edge("drone", "rec", [(1010, 455), (1185, 430)], "Delivered package\n(returned package)", "c-out", both=True)
+en.edge("drone", "phone", [(1010, 525), (1185, 550)], "Notification, pickup\ncode, proof of delivery", "c-out", both=True)
+en.edge("rec", "phone", [(1280, 458), (1280, 522)], "Uses", "sec", dash=True, arrow=False)
+en.texts = [(850, 44, "CONSTRAINTS"), (420, 375, "STRUCTURING INPUTS"), (1280, 375, "STRUCTURING OUTPUTS"),
+            (850, 905, "RESOURCES")]
+en.legend = [("c-in", "Structuring inputs"), ("c-out", "Structuring outputs"), ("c-res", "Resources"),
+             ("c-con", "Constraints"), ("sec", "Secondary external system")]
+en.legend_pos = (930, 965)
+
+DIAGRAMS = [env, fbs, tech, en]
