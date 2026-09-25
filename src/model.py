@@ -121,7 +121,7 @@ def build_fbs(key, title, root, lang):
 
 
 fbs = build_fbs("fbs", "Arbre fonctionnel (FBS)", "F0  Livrer un colis par drone\nen milieu urbain", "fr")
-fbs_en = build_fbs("fbs_en", "Functional breakdown structure", "F0  Deliver a parcel by drone\nin an urban area", "en")
+fbs_en = build_fbs("fbs_en", "Functional breakdown structure", "Delivery drone", "en")
 
 SUBFUNCS = [(f"{f[0]}.{j + 1}", s.replace("\n", " "), f[0]) for f in FUNCS for j, s in enumerate(f[2])]
 SUBFUNCS_EN = [(f"{f[0]}.{j + 1}", s.replace("\n", " "), f[0]) for f in FUNCS for j, s in enumerate(f[4])]

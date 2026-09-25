@@ -11,18 +11,19 @@ pres.title = 'Delivery drone - MBSE case study';
 
 const CAT = { 'c-in': P.c_in, 'c-out': P.c_out, 'c-res': P.c_res, 'c-con': P.c_con, sec: P.sec, tree: P.line_strong };
 
-function header(slide, title, sub) {
+function header(slide, title, sub, subtitle) {
   slide.background = { color: 'FFFFFF' };
   slide.addText(title, { x: 0.5, y: 0.25, w: 9, h: 0.5, fontFace: FONT, fontSize: 26, bold: true, color: P.ink, margin: 0, isTextBox: true });
+  if (subtitle) slide.addText(subtitle, { x: 0.5, y: 0.75, w: 9, h: 0.3, fontFace: FONT, fontSize: 14, color: P.ink, margin: 0, isTextBox: true });
   slide.addText(sub, { x: 9.3, y: 0.3, w: 3.53, h: 0.4, fontFace: FONT, fontSize: 12, color: P.muted, align: 'right', margin: 0, isTextBox: true });
 }
 
-function drawDiagram(slide, d, box, fs) {
+function drawDiagram(slide, d, box, fs, st = {}) {
   const sx = box.w / d.w, sy = box.h / d.h;
   const X = x => box.x + x * sx, Y = y => box.y + y * sy;
   // flèches (segments) d'abord, pour passer sous les boîtes
   for (const e of d.edges) {
-    const color = CAT[e.cls] || P.line_strong;
+    const color = (e.cls === 'tree' && st.tree) || CAT[e.cls] || P.line_strong;
     const n = e.pts.length - 1;
     for (let i = 0; i < n; i++) {
       const [x1, y1] = e.pts[i], [x2, y2] = e.pts[i + 1];
@@ -41,22 +42,23 @@ function drawDiagram(slide, d, box, fs) {
     const lines = n.label.split('\n');
     const sys = n.cls === 'sys', fn = n.cls === 'fn', sub = n.cls === 'sub';
     const size = sys ? fs.sys : fn ? fs.fn : fs.node;
-    const textColor = sys ? 'FFFFFF' : P.ink;
+    const cs = st[n.cls];
+    const textColor = cs ? cs.text : sys ? 'FFFFFF' : P.ink;
     const runs = lines.map((t, i) => ({
       text: t,
       options: {
         bold: sys || fn || (!sub && lines.length > 1 && i === 0),
-        color: (!sys && !fn && !sub && i > 0) ? P.muted : textColor,
+        color: (!cs && !sys && !fn && !sub && i > 0) ? P.muted : textColor,
         breakLine: i < lines.length - 1,
       },
     }));
-    const stroke = sys ? P.ink : fn ? P.accent : (CAT[n.cls] || P.line_strong);
+    const stroke = cs ? cs.fill : sys ? P.ink : fn ? P.accent : (CAT[n.cls] || P.line_strong);
     const line = { color: stroke, width: n.cls.startsWith('c-') ? 1.75 : 1 };
     if (n.cls === 'sec') line.dashType = 'dash';
     slide.addText(runs, {
       shape: pres.shapes.ROUNDED_RECTANGLE, rectRadius: 0.06,
       x: X(n.cx - n.w / 2), y: Y(n.cy - n.h / 2), w: n.w * sx, h: n.h * sy,
-      fill: { color: sys ? P.ink : fn ? P.fn : 'FFFFFF' }, line,
+      fill: { color: cs ? cs.fill : sys ? P.ink : fn ? P.fn : 'FFFFFF' }, line,
       fontFace: FONT, fontSize: size, align: 'center', valign: 'middle', margin: 2,
     });
   }
@@ -90,15 +92,20 @@ function drawDiagram(slide, d, box, fs) {
 
 // 1. Environment diagram
 let s = pres.addSlide();
-header(s, 'Environment analysis', 'Operational view · Environment diagram');
-drawDiagram(s, M.env, { x: 0.5, y: 0.85, w: 12.33, h: 6.4 }, { sys: 13, fn: 9, node: 8, label: 7 });
+header(s, 'Environment analysis', 'Operational view · Environment analysis', 'Environment diagram');
+drawDiagram(s, M.env, { x: 0.5, y: 1.05, w: 12.33, h: 6.25 }, { sys: 13, fn: 9, node: 8, label: 7 });
 s.addNotes('Delivery drone as a black box. 18 external actors and systems (2 secondary), grouped in the four categories of the course: constraints, structuring inputs, structuring outputs, resources.');
 
 // 2. Functional breakdown structure
 s = pres.addSlide();
-header(s, 'Functional breakdown structure', 'Functional view · Behavioral analysis');
-drawDiagram(s, M.fbs, { x: 0.5, y: 1.0, w: 12.33, h: 6.1 }, { sys: 12, fn: 9, node: 7.5, label: 7 });
-s.addNotes('F0 is the mission. 8 level-1 functions and 42 level-2 sub-functions. Every function starts with an action verb and names no technology.');
+header(s, 'Functional analysis', 'Functional view · Behavioral analysis', 'Functional breakdown structure');
+drawDiagram(s, M.fbs, { x: 0.5, y: 1.2, w: 12.33, h: 6.0 }, { sys: 13, fn: 9, node: 7.5, label: 7 }, {
+  tree: '1F6FA3',
+  sys: { fill: '00587C', text: 'FFFFFF' },
+  fn: { fill: 'E1002A', text: 'FFFFFF' },
+  sub: { fill: '9E3200', text: 'FFFFFF' },
+});
+s.addNotes('The root is the system of interest (delivery drone). 8 level-1 functions and 42 level-2 sub-functions. Every function starts with an action verb and names no technology.');
 
 // 3. Coverage check
 s = pres.addSlide();
