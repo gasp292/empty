@@ -63,42 +63,69 @@ env.legend = [("c-in", "Entrées structurantes"), ("c-out", "Sorties structurant
 env.legend_pos = (20, 770)
 
 # ================================================================ 2. FONCTIONNEL (FBS)
-FUNCS = [
+FUNCS = [  # id, nom FR, sous-fonctions FR, nom EN, sous-fonctions EN
     ("F1", "Gérer la mission", ["Recevoir l'ordre\nde livraison", "Planifier la\ntrajectoire",
-                                "Obtenir l'autorisation\nde vol", "Suivre et rendre\ncompte de la mission"]),
+                                "Obtenir l'autorisation\nde vol", "Suivre et rendre\ncompte de la mission"],
+     "Manage the mission", ["Receive the\ndelivery order", "Plan the route", "Obtain flight\nauthorization",
+                            "Track and report\nmission status"]),
     ("F2", "Gérer le colis", ["Accueillir et\nverrouiller le colis", "Mesurer la masse\ndu colis",
-                              "Maintenir le colis\npendant le vol", "Déposer le colis\nau destinataire"]),
+                              "Maintenir le colis\npendant le vol", "Authentifier\nle destinataire",
+                              "Déposer le colis\nau destinataire", "Fournir une preuve\nde livraison",
+                              "Gérer les retours et\ncolis non livrés"],
+     "Handle the package", ["Accept and lock\nthe package", "Measure the\npackage mass", "Hold the package\nin flight",
+                            "Authenticate\nthe recipient", "Deliver the package\nto the recipient",
+                            "Provide proof\nof delivery", "Handle returns and\nundelivered packages"]),
     ("F3", "Se déplacer\ndans l'air", ["Générer la poussée", "Contrôler l'attitude", "Décoller",
-                                       "Atterrir", "Supporter les efforts\nmécaniques"]),
-    ("F4", "Naviguer", ["Se localiser", "Percevoir\nl'environnement", "Détecter et éviter\nles obstacles",
-                        "Suivre la trajectoire"]),
+                                       "Tenir un vol\nstationnaire", "Atterrir", "Supporter les efforts\nmécaniques"],
+     "Move through\nthe air", ["Generate thrust", "Control attitude", "Take off", "Hover in place", "Land",
+                               "Withstand\nmechanical loads"]),
+    ("F4", "Naviguer", ["Se localiser", "Percevoir\nl'environnement", "Détecter et éviter\nobstacles, aéronefs",
+                        "Suivre la trajectoire", "Identifier, vérifier\nla zone de dépose"],
+     "Navigate", ["Determine\nits position", "Perceive the\nenvironment", "Detect and avoid\nobstacles, aircraft",
+                  "Follow the route", "Identify and check\nthe drop zone"]),
     ("F5", "Communiquer", ["Échanger avec\nla supervision", "Échanger avec\nl'U-space (UTM)",
                            "Interagir avec\nle destinataire", "S'identifier\nà distance",
-                           "Se rendre visible\net audible"]),
+                           "Se rendre visible\net audible", "Sécuriser les\ncommunications"],
+     "Communicate", ["Exchange with\nthe telepilot", "Exchange with\nU-space (UTM)", "Interact with\nthe recipient",
+                     "Identify itself\nremotely", "Be visible\nand audible", "Secure\ncommunications"]),
     ("F6", "Gérer l'énergie", ["Recevoir l'énergie\nde recharge", "Stocker l'énergie",
-                               "Surveiller l'état\nde la batterie", "Distribuer l'énergie"]),
+                               "Surveiller l'état\nde la batterie", "Distribuer l'énergie"],
+     "Manage energy", ["Receive\ncharging energy", "Store energy", "Monitor\nbattery state", "Distribute energy"]),
     ("F7", "Assurer la sécurité", ["Surveiller l'état\ndu système", "Respecter les zones\nde vol (geofencing)",
                                    "Gérer les modes\ndégradés", "Limiter la gravité\nd'une chute",
-                                   "Protéger des\nintempéries"]),
+                                   "Protéger des\nintempéries", "Limiter les nuisances\n(bruit, vie privée)"],
+     "Ensure safety", ["Monitor\nsystem health", "Respect flight zones\n(geofencing)", "Manage\ndegraded modes",
+                       "Limit the severity\nof a fall", "Withstand\nbad weather", "Limit nuisance\n(noise, privacy)"]),
     ("F8", "Permettre\nla maintenance", ["Enregistrer les\ndonnées de vol", "Diagnostiquer\nles pannes",
-                                         "Mettre à jour\nles logiciels", "Permettre l'échange\nde modules"]),
+                                         "Mettre à jour\nles logiciels", "Permettre l'échange\nde modules"],
+     "Enable\nmaintenance", ["Record\nflight data", "Diagnose failures", "Update software", "Allow module\nreplacement"]),
 ]
-fbs = Diagram("fbs", "Arbre fonctionnel (FBS)", 1338, 500)
-fbs.node("F0", "F0  Livrer un colis par drone\nen milieu urbain", 669, 44, 360, 52, "sys")
-for i, (fid, name, subs) in enumerate(FUNCS):
-    x0 = 20 + i * 164
-    cx = x0 + 75
-    fbs.node(fid, f"{fid}  {name}", cx, 160, 150, 52, "fn")
-    fbs.edge("F0", fid, [(669, 70), (669, 106), (cx, 106), (cx, 134)], cls="tree", arrow=False)
-    for j, s in enumerate(subs):
-        sid = f"{fid}.{j + 1}"
-        cy = 236 + j * 54
-        fbs.node(sid, f"{sid[1:]}  {s}", x0 + 85, cy, 130, 44, "sub")
-        fbs.edge(fid, sid, [(x0 + 9, 186), (x0 + 9, cy), (x0 + 20, cy)], cls="tree", arrow=False)
 
-SUBFUNCS = [(f"{fid}.{j + 1}", s.replace("\n", " "), fid)
-            for fid, _, subs in FUNCS for j, s in enumerate(subs)]
-FUNC_NAMES = {fid: n.replace("\n", " ") for fid, n, _ in FUNCS}
+
+def build_fbs(key, title, root, lang):
+    n_max = max(len(f[2]) for f in FUNCS)
+    d = Diagram(key, title, 1338, 236 + (n_max - 1) * 54 + 45)
+    d.node("F0", root, 669, 44, 360, 52, "sys")
+    for i, (fid, name_fr, subs_fr, name_en, subs_en) in enumerate(FUNCS):
+        name, subs = (name_fr, subs_fr) if lang == "fr" else (name_en, subs_en)
+        x0 = 20 + i * 164
+        cx = x0 + 75
+        d.node(fid, f"{fid}  {name}", cx, 160, 150, 52, "fn")
+        d.edge("F0", fid, [(669, 70), (669, 106), (cx, 106), (cx, 134)], cls="tree", arrow=False)
+        for j, s in enumerate(subs):
+            sid = f"{fid}.{j + 1}"
+            cy = 236 + j * 54
+            d.node(sid, f"{sid[1:]}  {s}", x0 + 85, cy, 130, 44, "sub")
+            d.edge(fid, sid, [(x0 + 9, 186), (x0 + 9, cy), (x0 + 20, cy)], cls="tree", arrow=False)
+    return d
+
+
+fbs = build_fbs("fbs", "Arbre fonctionnel (FBS)", "F0  Livrer un colis par drone\nen milieu urbain", "fr")
+fbs_en = build_fbs("fbs_en", "Functional breakdown structure", "F0  Deliver a parcel by drone\nin an urban area", "en")
+
+SUBFUNCS = [(f"{f[0]}.{j + 1}", s.replace("\n", " "), f[0]) for f in FUNCS for j, s in enumerate(f[2])]
+SUBFUNCS_EN = [(f"{f[0]}.{j + 1}", s.replace("\n", " "), f[0]) for f in FUNCS for j, s in enumerate(f[4])]
+FUNC_NAMES = {f[0]: f[1].replace("\n", " ") for f in FUNCS}
 
 # ================================================================ 3. TECHNIQUE
 tech = Diagram("tech", "Diagramme d'interactions techniques", 1505, 925, dx=80)
@@ -199,34 +226,35 @@ GROUP_LABEL = {g[0]: g[1] for g in GROUPS}
 # fonction -> composants qui la réalisent
 TRACE = {
     "F1.1": ["modem", "mc"], "F1.2": ["mc"], "F1.3": ["mc", "modem"], "F1.4": ["mc", "modem"],
-    "F2.1": ["bay"], "F2.2": ["mass"], "F2.3": ["bay", "frame"], "F2.4": ["winch", "dcam"],
+    "F2.1": ["bay"], "F2.2": ["mass"], "F2.3": ["bay", "frame"], "F2.4": ["dcam", "mc"],
+    "F2.5": ["winch", "dcam"], "F2.6": ["dcam", "mc"], "F2.7": ["bay", "winch", "mc"],
     "F3.1": ["esc", "mot", "prop"], "F3.2": ["fc", "esc"], "F3.3": ["fc", "mot", "prop"],
-    "F3.4": ["fc", "us", "gear"], "F3.5": ["frame"],
+    "F3.4": ["fc", "gnss", "mot"], "F3.5": ["fc", "us", "gear"], "F3.6": ["frame"],
     "F4.1": ["gnss", "fc"], "F4.2": ["cam", "lidar", "us"], "F4.3": ["mc", "cam", "lidar"],
-    "F4.4": ["fc", "mc"],
-    "F5.1": ["modem", "radio"], "F5.2": ["modem", "mc"], "F5.3": ["dcam", "lights"], "F5.4": ["rid"],
-    "F5.5": ["lights"],
+    "F4.4": ["fc", "mc"], "F4.5": ["dcam", "lidar", "mc"],
+    "F5.1": ["modem", "radio"], "F5.2": ["modem", "mc"], "F5.3": ["lights", "modem"], "F5.4": ["rid"],
+    "F5.5": ["lights"], "F5.6": ["modem", "mc"],
     "F6.1": ["conn"], "F6.2": ["bat"], "F6.3": ["bms"], "F6.4": ["pdb"],
     "F7.1": ["fc", "mc", "bms"], "F7.2": ["mc", "gnss"], "F7.3": ["fc", "mc"], "F7.4": ["para"],
-    "F7.5": ["frame"],
+    "F7.5": ["frame"], "F7.6": ["prop", "mc"],
     "F8.1": ["fc", "mc"], "F8.2": ["mc", "fc"], "F8.3": ["mc", "modem"], "F8.4": ["frame", "bat"],
 }
 # interaction opérationnelle -> fonctions qui la couvrent
 OPS_TRACE = [
-    ("Expéditeur", "Colis", "Entrée", ["F2.1", "F2.2"]),
-    ("Plateforme de commande", "Ordre de livraison", "Entrée", ["F1.1"]),
-    ("Destinataire", "Colis livré", "Sortie", ["F2.4"]),
-    ("Smartphone du destinataire", "Notification, code de retrait", "Sortie", ["F5.3"]),
+    ("Expéditeur", "Colis", "Entrée", ["F2.1", "F2.2", "F2.7"]),
+    ("Plateforme de commande", "Ordre de livraison", "Entrée", ["F1.1", "F1.4"]),
+    ("Destinataire", "Colis livré", "Sortie", ["F2.5", "F2.7"]),
+    ("Smartphone du destinataire", "Notification, code de retrait", "Sortie", ["F2.4", "F2.6", "F5.3"]),
     ("Station de recharge", "Électricité", "Ressource", ["F6.1"]),
     ("Constellation GNSS", "Signal de positionnement", "Ressource", ["F4.1"]),
-    ("Réseau 4G / 5G", "Télémétrie, ordres", "Ressource", ["F5.1", "F1.4"]),
+    ("Réseau 4G / 5G", "Télémétrie, ordres", "Ressource", ["F5.1", "F5.6"]),
     ("Centre de supervision", "Ordres de mission, état du vol", "Ressource", ["F5.1", "F7.3"]),
     ("Opérateur de maintenance", "Maintenance, diagnostic", "Ressource", ["F8.1", "F8.2", "F8.3", "F8.4"]),
     ("Régulateur", "Lois, normes", "Contrainte", ["F5.4", "F7.2", "F7.4"]),
     ("U-space / UTM", "Autorisations, zones géographiques", "Contrainte", ["F1.3", "F5.2", "F7.2"]),
     ("Climat", "Vent, pluie, température", "Contrainte", ["F3.2", "F7.5"]),
     ("Environnement urbain", "Obstacles", "Contrainte", ["F4.2", "F4.3"]),
-    ("Tiers / riverains", "Bruit, risque de chute, vie privée", "Contrainte", ["F7.4", "F5.5", "F3.1"]),
+    ("Tiers / riverains", "Bruit, risque de chute, vie privée", "Contrainte", ["F7.4", "F7.6", "F5.5"]),
 ]
 USE_CASES = [
     ("UC1", "Livrer un colis", "Utilisation nominale : chargement au hub, vol, dépose au treuil, retour."),
@@ -285,4 +313,4 @@ en.legend = [("c-in", "Structuring inputs"), ("c-out", "Structuring outputs"), (
              ("c-con", "Constraints"), ("sec", "Secondary external system")]
 en.legend_pos = (930, 965)
 
-DIAGRAMS = [env, fbs, tech, en]
+DIAGRAMS = [env, fbs, tech, en, fbs_en]

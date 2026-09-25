@@ -115,7 +115,7 @@ code{{font:500 12px var(--font-mono);color:var(--accent)}}
   traçabilité justifient le passage d'une vue à l'autre.</p>
   <nav class="chain" aria-label="Vues d'architecture">
     <a href="#operationnel"><span class="idx">Vue opérationnelle · boîte noire</span><b>Pourquoi ?</b><span>Acteurs, systèmes externes et flux échangés</span></a>
-    <a href="#fonctionnel"><span class="idx">Vue fonctionnelle · boîte grise</span><b>Quoi ?</b><span>8 fonctions, 35 sous-fonctions</span></a>
+    <a href="#fonctionnel"><span class="idx">Vue fonctionnelle · boîte grise</span><b>Quoi ?</b><span>8 fonctions, 42 sous-fonctions</span></a>
     <a href="#technique"><span class="idx">Vue technique · boîte blanche</span><b>Comment ?</b><span>8 sous-systèmes, 24 composants</span></a>
   </nav>
 </header>
