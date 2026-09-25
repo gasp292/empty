@@ -6,6 +6,7 @@
 | Exercice 2 : arbre fonctionnel FBS (vue fonctionnelle) | `livrables/png/2_fbs.png` |
 | Exercice 3 : diagramme d'interactions techniques (vue technique) | `livrables/png/3_tech.png` |
 | Les 3 diagrammes + matrice de traçabilité, éditables (4 onglets) | `livrables/drone_mbse.drawio` → ouvrir sur app.diagrams.net |
+| **Slides PowerPoint en anglais (formes natives modifiables)** | `livrables/drone_mbse_EN.pptx` |
 | Synthèse complète (cas d'usage, traçabilité, arbitrages) | `livrables/drone_mbse.html` |
 
 Tout est généré depuis `src/model.py` :
