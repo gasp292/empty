@@ -19,11 +19,32 @@ function header(slide, title, sub, subtitle) {
 }
 
 function drawDiagram(slide, d, box, fs, st = {}) {
-  const sx = box.w / d.w, sy = box.h / d.h;
-  const X = x => box.x + x * sx, Y = y => box.y + y * sy;
+  const sx = box.w / d.w, sy = box.h / d.h, dx = d.dx || 0;
+  const X = x => box.x + (x + dx) * sx, Y = y => box.y + y * sy;
+  // sous-systèmes et frontière du système
+  const groups = d.groups || [];
+  for (const g of groups) {
+    const bnd = g.cls === 'bnd', gs = st[bnd ? 'bnd' : 'grp'] || {};
+    slide.addShape(pres.shapes.ROUNDED_RECTANGLE, {
+      x: X(g.x0), y: Y(g.y0), w: (g.x1 - g.x0) * sx, h: (g.y1 - g.y0) * sy, rectRadius: bnd ? 0.15 : 0.04,
+      fill: { color: gs.fill || P.grp }, line: { color: gs.fill || P.line, width: 0.75 },
+    });
+    if (bnd) {
+      slide.addText(g.label, { x: X(g.x1) - 3.1, y: Y(g.y0) + 0.025, w: 3, h: 0.19, fontFace: FONT, fontSize: 12, bold: true,
+        color: P.ink, align: 'right', valign: 'middle', margin: 0, isTextBox: true });
+    } else {
+      slide.addText(g.label, { x: X(g.lx), y: Y(g.y0) + 0.01, w: 1.6, h: 0.17, fontFace: FONT, fontSize: 8.5, bold: true,
+        color: gs.text || P.muted, valign: 'middle', margin: 0, isTextBox: true });
+    }
+  }
+  const bgAt = (x, y) => {  // couleur du fond sous un libellé
+    let c = 'FFFFFF';
+    for (const g of groups) if (x >= g.x0 && x <= g.x1 && y >= g.y0 && y <= g.y1) c = (st[g.cls === 'bnd' ? 'bnd' : 'grp'] || {}).fill || (g.cls === 'bnd' ? 'FFFFFF' : P.grp);
+    return c;
+  };
   // flèches (segments) d'abord, pour passer sous les boîtes
   for (const e of d.edges) {
-    const color = (e.cls === 'tree' && st.tree) || CAT[e.cls] || P.line_strong;
+    const color = st.flow || (e.cls === 'tree' && st.tree) || CAT[e.cls] || P.line_strong;
     const n = e.pts.length - 1;
     for (let i = 0; i < n; i++) {
       const [x1, y1] = e.pts[i], [x2, y2] = e.pts[i + 1];
@@ -69,13 +90,17 @@ function drawDiagram(slide, d, box, fs, st = {}) {
     const w = maxc * fs.label * 0.50 / 72 + 0.1, h = lines.length * fs.label * 1.2 / 72 + 0.05;
     slide.addText(lines.join('\n'), {
       x: X(e.lp[0]) - w / 2, y: Y(e.lp[1]) - h / 2, w, h,
-      fontFace: FONT, fontSize: fs.label, color: P.muted, align: 'center', valign: 'middle',
-      fill: { color: 'FFFFFF' }, margin: 0, isTextBox: true,
+      fontFace: FONT, fontSize: fs.label, color: st.flow ? P.ink : P.muted, align: 'center', valign: 'middle',
+      fill: { color: bgAt(e.lp[0], e.lp[1]) }, margin: 0, isTextBox: true,
     });
   }
   for (const [x, y, t] of d.texts || []) {
     slide.addText(t, { x: X(x) - 1.5, y: Y(y) - 0.15, w: 3, h: 0.3, fontFace: FONT, fontSize: 12, bold: true,
       color: P.ink, align: 'center', valign: 'middle', charSpacing: 2, margin: 0, isTextBox: true });
+  }
+  for (const [[nx, ny], t] of d.notes || []) {
+    slide.addText(t, { x: X(nx), y: Y(ny) - 0.1, w: 7, h: 0.2, fontFace: FONT, fontSize: 8, italic: true, color: P.muted,
+      margin: 0, isTextBox: true });
   }
   if (d.legend && d.legend.length) {
     let [lx, ly] = d.legend_pos;
@@ -123,5 +148,31 @@ s.addTable([hdr, ...rows], {
 });
 s.addText('All 16 direct interactions are covered by at least one sub-function. Secondary systems (customer, energy grid) have no direct exchange with the drone.',
   { x: 0.5, y: 6.75, w: 12.33, h: 0.35, fontFace: FONT, fontSize: 11, italic: true, color: P.muted, margin: 0, isTextBox: true });
+
+// 4. Technical interaction diagram
+s = pres.addSlide();
+header(s, 'Technical analysis', 'Technical view · Structural analysis', 'Technical interaction diagram');
+drawDiagram(s, M.tech, { x: 0.5, y: 1.15, w: 12.33, h: 6.2 }, { sys: 12, fn: 9, node: 7.5, label: 7 }, {
+  flow: '2E75B6',
+  bnd: { fill: 'D9D9D9' },
+  grp: { fill: '2FA84F', text: 'FFFFFF' },
+  cmp: { fill: '1B5E36', text: 'FFFFFF' },
+  ext: { fill: '0B6FB0', text: 'FFFFFF' },
+});
+s.addNotes('24 components in 8 sub-systems embody the 42 functions. Flows: electricity, data and signals, mechanical loads and matter, waves (light, sound, radio).');
+
+// 5. Components -> functions
+s = pres.addSlide();
+header(s, 'Components → functions', 'Technical view · Traceability', 'Each component embodies at least one function; each function has at least one component');
+const th = ['Component', 'Sub-system', 'Functions'].map(t => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: '1B5E36' } } }));
+const half = Math.ceil(M.comp_trace.length / 2);
+[M.comp_trace.slice(0, half), M.comp_trace.slice(half)].forEach((part, k) => {
+  s.addTable([th, ...part.map(([c, g, f]) => [{ text: c, options: { bold: true } }, { text: g, options: { color: P.muted } },
+    { text: f, options: { color: P.accent } }])], {
+    x: 0.5 + k * 6.315, y: 1.3, w: 6.015, colW: [2.2, 1.25, 2.565], rowH: 0.42,
+    fontFace: FONT, fontSize: 10, color: P.ink, valign: 'middle',
+    border: { type: 'solid', pt: 0.75, color: P.line }, margin: [0, 5, 0, 5],
+  });
+});
 
 pres.writeFile({ fileName: path.join(__dirname, '..', 'livrables', 'drone_mbse_EN.pptx') }).then(f => console.log('written', f));

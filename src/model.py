@@ -314,3 +314,59 @@ en.legend = [("c-in", "Structuring inputs"), ("c-out", "Structuring outputs"), (
 en.legend_pos = (930, 965)
 
 DIAGRAMS = [env, fbs, tech, en, fbs_en]
+
+# ================================================================ 3bis. TECHNIQUE (EN, format des slides 20-21)
+import copy
+TECH_EN = {
+    "Système : drone de livraison": "Delivery drone", "PERCEPTION": "Perception", "COMMUNICATION": "Communication",
+    "ÉNERGIE": "Energy", "AVIONIQUE": "Avionics", "CHARGE UTILE": "Payload", "PROPULSION": "Propulsion",
+    "STRUCTURE": "Structure", "SÉCURITÉ": "Safety",
+    "Récepteur GNSS": "GNSS receiver", "Caméras stéréo": "Stereo cameras", "LiDAR": "LiDAR",
+    "Capteurs ultrasons": "Ultrasonic sensors", "Modem 4G/5G\n+ antenne": "4G/5G modem\n+ antenna",
+    "Radio C2\nde secours": "Backup C2\nradio", "Module\nRemote ID": "Remote ID\nmodule",
+    "Connecteur\nde charge": "Charging\nconnector", "BMS\n(gestion batterie)": "BMS (battery\nmanagement)",
+    "Batterie Li-ion": "Li-ion battery", "Carte de\ndistribution": "Power distribution\nboard",
+    "Contrôleur de vol\nautopilote + firmware\nIMU, baromètre, compas": "Flight controller\nautopilot + firmware\nIMU, barometer, compass",
+    "Ordinateur de mission\nOS + logiciels mission,\nnavigation, évitement": "Mission computer\nOS + mission, navigation,\navoidance software",
+    "Capteur de masse": "Load cell (mass)", "Compartiment\n+ verrou": "Package bay\n+ lock",
+    "Treuil + câble": "Winch + tether", "Caméra de dépose": "Drop-zone camera",
+    "Variateurs\n(ESC) ×4": "Speed controllers\n(ESC) ×4", "Moteurs\nbrushless ×4": "Brushless\nmotors ×4",
+    "Hélices ×4": "Propellers ×4", "Châssis carbone\n+ bras": "Carbon frame\n+ arms",
+    "Train\nd'atterrissage": "Landing gear", "Parachute": "Parachute", "Feux\n+ haut-parleur": "Lights\n+ speaker",
+    "Environnement urbain\n(obstacles)": "Urban environment\n(obstacles)", "Constellation GNSS": "GNSS constellation",
+    "Réseau 4G/5G": "4G/5G network", "Centre de\nsupervision": "Remote supervision\noperator",
+    "Récepteurs Remote ID\n(autorités)": "Remote ID receivers\n(authorities)",
+    "Opérateur de\nmaintenance": "Maintenance\noperator", "Station\nde recharge": "Charging\nstation",
+    "Expéditeur\n(hub)": "Warehouse", "Destinataire": "Recipient", "Smartphone\ndestinataire": "Recipient's\nsmartphone",
+    "Tiers / riverains": "Third parties /\nresidents", "Atmosphère (air)": "Atmosphere (air)",
+    "Lumière, échos\n(obstacles)": "Light, echoes\n(obstacles)", "Signal GNSS": "GNSS signal",
+    "Télémétrie, ordres": "Telemetry, commands", "Commandes C2": "C2 commands", "Identification": "Identification",
+    "Journaux de vol, MAJ": "Flight logs, updates", "Électricité": "Electricity", "Colis": "Package",
+    "Colis livré": "Delivered package", "QR code": "Pickup QR code", "Poussée": "Thrust", "Lumière, son": "Light, sound",
+    "Position, images,\ndistances": "Position, images,\ndistances", "Mission,\ntélémétrie": "Mission,\ntelemetry",
+    "C2 secours": "Backup C2", "Position, ID": "Position, ID", "Consignes,\nétat": "Setpoints,\nstatus",
+    "État\nbatterie": "Battery\nstatus", "Consignes\nmoteurs": "Motor\ncommands", "Largage,\nmesures": "Release,\nmeasures",
+    "Déclenchement,\nsignalisation": "Trigger,\nsignalling", "Efforts\nmécaniques": "Mechanical\nloads",
+}
+tech_en = copy.deepcopy(tech)
+tech_en.key, tech_en.title = "tech_en", "Technical interaction diagram"
+for g in tech_en.groups:
+    g["label"] = TECH_EN[g["label"]]
+for n in tech_en.nodes.values():
+    n["label"] = TECH_EN[n["label"]]
+# libellés des liaisons courtes, placés à côté du trait
+SHORT = {("conn", "bms"): ("Electricity", (313, 426)), ("bms", "bat"): ("Electricity", (313, 495)),
+         ("bat", "pdb"): ("Electricity", (313, 570)), ("pdb", "esc"): ("Power", (380, 598)),
+         ("esc", "mot"): ("Power", (562, 598)), ("mot", "prop"): ("Torque", (737, 598)),
+         ("bay", "mass"): ("Weight", (1127, 426)), ("bay", "winch"): ("Package", (1130, 495)),
+         ("frame", "gear"): ("Loads", (375, 748))}
+for e in tech_en.edges:
+    if e["label"]:
+        e["label"] = TECH_EN[e["label"]]
+    elif (e["src"], e["dst"]) in SHORT:
+        e["label"], e["lp"] = SHORT[(e["src"], e["dst"])]
+tech_en.legend = []
+tech_en.notes = [((-60, 905), "Not shown: low-voltage supply of every piece of equipment by the power distribution board.")]
+COMP_EN = {c[0]: TECH_EN[c[1]].replace("\n", " ") for c in COMPONENTS}
+COMP_EN["fc"], COMP_EN["mc"] = "Flight controller", "Mission computer"
+DIAGRAMS.append(tech_en)
